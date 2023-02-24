@@ -29,6 +29,7 @@ app.get('/api/v1/ips', (req, res) => {
 });
 
 app.get('/', function(req, res) {
+    console.log('[GET] - /')
     res.sendFile(__dirname + '/src/main.html');
 });
 

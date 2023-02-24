@@ -22,6 +22,13 @@ or
 
 http://localhost:3000/api/v1/ips
 
+Docker build:
+
+`docker build -t <name> .` \
+
+Docker run:
+`docker run  -e LM_POLL_INTERVAL='5'  -e LM_SUBNET='10.1.1.0/24' -p 3000:3000 <imagename>`\
+
 Screenshot:
 
 ![Alt text](/media/Screenshot1.png "Main view")

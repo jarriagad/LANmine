@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+    <head>
+        <title>LANmine</title>
+        <meta name="description" content="Simple subnet insights">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+        <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.2/css/jquery.dataTables.css">
+        <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.2/js/jquery.dataTables.js"></script>
+        <!--<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/yegor256/tacit@gh-pages/tacit-css-1.5.5.min.css"/>-->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/yegor256/tacit@gh-pages/tacit-css-1.5.5.min.css"/>
+    </head>
+    <body>
+        <h1>LANmine</h1>
+        <h2>LAN IP activity monitor</h2>
+        <table id="ips-table" class="display">
+            <thead>
+                <tr>
+                    <th>Host / IP</th>
+                    <th>Status</th>
+                    <th>Last Checkin</th>
+                </tr>
+            </thead>
+        </table>
+    </body>
+</html>
+<script>
+    $(document).ready(function() {
+    var table = $('#ips-table').DataTable({
+        "ajax": {
+        "url": "/api/v1/ips",
+        "dataSrc": function (json) {
+            var data = [];
+            for (var key in json) {
+            if (json.hasOwnProperty(key)) {
+                data.push({
+                "host": key,
+                "status": json[key].status,
+                "lastCheckin": json[key].lastCheckin
+                });
+            }
+            }
+            return data;
+        }
+        },
+        "columns": [
+        { "data": "host" },
+        { "data": "status" },
+        { "data": "lastCheckin" }
+        ]
+    });
+    setInterval( function () {
+        table.ajax.reload( null, false ); // Retain paging position
+    }, 2000 );
+    });
+</script>

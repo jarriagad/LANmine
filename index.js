@@ -21,6 +21,21 @@ try {
     }
 }
 
+setInterval(asyncPing, pollInterval);
+
+app.get('/api/v1/ips', (req, res) => {
+    console.log('[GET] - /api/v1/ips')
+    res.json(statusObj);
+});
+
+app.get('/', function(req, res) {
+    res.sendFile(__dirname + '/src/main.html');
+});
+
+app.listen(3000, () => {
+    console.log('Server started on port 3000.');
+});
+
 function getAllIPsInRange(cidr) {
     const ipArray = cidr.split('/');
     const ipAddr = ipArray[0];
@@ -76,14 +91,3 @@ function asyncPing() {
 
     writeObjectToFile(statusObj, dbname)
 }
-
-setInterval(asyncPing, pollInterval);
-
-app.get('/api/v1/ips', (req, res) => {
-    console.log('[GET] - /api/v1/ips')
-    res.json(statusObj);
-});
-
-app.listen(3000, () => {
-    console.log('Server started on port 3000.');
-});

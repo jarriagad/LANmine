@@ -6,17 +6,17 @@ node.js needs to be installed
 
 Right now all it does is try to ping all hosts in a given subnet
 
-need to `npm install ping`
+need to `npm install ping` \
 need to `npm install express`
 
-first set env variables:
+first set env variables: 
 
-`export LM_SUBNET='10.1.1.0/24`
+`export LM_SUBNET='10.1.1.0/24` \
 `export LM_POLL_INTERVAL=5`
 
 to run: `node index.js`
 
-Then navigate to http:localhost:3000
+Then navigate to http://localhost:3000
 
 or
 

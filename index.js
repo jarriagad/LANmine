@@ -1,4 +1,25 @@
-var ping = require('ping');
+const ping = require('ping');
+const express = require('express');
+const fs = require('fs');
+
+const app = express();
+const dbname = 'checkindb.json'
+const subnet = process.env.LM_SUBNET // CIDR Notation subnet
+const pollInterval = process.env.LM_POLL_INTERVAL * 1000 // Time in sec
+const hosts = getAllIPsInRange(subnet)
+
+let statusObj = {};
+
+try {
+    const fileData = fs.readFileSync(dbname);
+    if (fileData.length > 0) {
+        statusObj = JSON.parse(fileData);
+    }
+    } catch (err) {
+    if (err.code !== 'ENOENT') {
+        console.error(`Error reading ${dbname}: ${err}`);
+    }
+}
 
 function getAllIPsInRange(cidr) {
     const ipArray = cidr.split('/');
@@ -22,37 +43,47 @@ function getAllIPsInRange(cidr) {
     }
 }
 
-
-async function asyncPing(hosts) {
-    const pingPromises = hosts.map((host) => {
-        return ping.promise.probe(host, { timeout: 1.5, min_reply: 3 });
-    });
-
-    return Promise.all(pingPromises).then((results) => {
-        const statusObj = {};
-
-        results.forEach((result, index) => {
-        const host = hosts[index];
-        statusObj[host] = result.alive ? 'up' : 'down';
-        });
-
-        return statusObj;
-    });
+function writeObjectToFile(obj, filePath) {
+    const jsonData = JSON.stringify(obj);
+    fs.writeFileSync(filePath, jsonData);
 }
 
-function continuousPing() {
-    console.log('Initiating LAN sweep');
+function asyncPing() {
+    const pingPromises = hosts.map(async (host) => {
+        const result = await ping.promise.probe(host, { timeout: 1.5, min_reply: 3 });
+        const status = result.alive ? 'up' : 'down';
+        let currentTimestamp = new Date;
+        if (statusObj[host] === undefined) {
+            statusObj[host] = { status: status, lastCheckin: 'never' };
+        } else if (statusObj[host].status !== status) {
+            statusObj[host].status = status;
+            if (status === 'up') {
+                statusObj[host].lastCheckin = currentTimestamp;
+            }
+        } else if (statusObj[host].status === status) {
+            statusObj[host].status = status;
+            if (status === 'up') {
+                statusObj[host].lastCheckin = currentTimestamp;
+            }
+        }
+    });
 
-    const subnet = process.env.LM_SUBNET;
-    const hosts = getAllIPsInRange(subnet);
-    console.log(`Pinging hosts: ${hosts}`)
-    setInterval(() => {
-        asyncPing(hosts).then((statusObj) => {
-            console.log(statusObj);
-        }).catch((err) => {
-            console.error(err);
-        });
-    }, 5000);
+    Promise.all(pingPromises).then(() => {
+        //console.log('Ping completed.');
+    }).catch((err) => {
+        console.error(err);
+    });
+
+    writeObjectToFile(statusObj, dbname)
 }
 
-continuousPing()
+setInterval(asyncPing, pollInterval);
+
+app.get('/api/v1/ips', (req, res) => {
+    console.log('[GET] - /api/v1/ips')
+    res.json(statusObj);
+});
+
+app.listen(3000, () => {
+    console.log('Server started on port 3000.');
+});
